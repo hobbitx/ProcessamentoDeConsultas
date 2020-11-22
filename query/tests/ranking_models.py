@@ -70,7 +70,7 @@ class RankingModelTest(unittest.TestCase):
     def test_boolean_model(self):
 
         arr_set_esperado_and_per_query  = [[{2,4},set()],[{1}]]
-        arr_set_esperado_or_per_query  = [[{1,2,3,4},set()],[{1,2,3}]]
+        arr_set_esperado_or_per_query  = [[{1,2,4},set()],[{1,2,3}]]
 
         for idx, map_index in enumerate(self.arr_indexes):
             for query_position, map_query in enumerate(self.arr_queries_per_idx[idx]):

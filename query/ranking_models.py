@@ -18,7 +18,26 @@ class IndexPreComputedVals():
         """
         self.document_norm = {}
         self.doc_count = self.index.document_count
-        
+        term_idf = dict()
+        sum_doc  = dict()
+        for term in list(self.index.dic_index.keys()):
+            occurrence_list = self.index.get_occurrence_list(term)
+            for item in occurrence_list:
+                tf_idf = VectorRankingModel.tf_idf(self.doc_count,item.term_freq,len(occurrence_list))
+                if term not in term_idf.keys():
+                    term_idf[term] = list()
+                    term_idf[term].append((item.doc_id,tf_idf))
+                else:
+                    term_idf[term].append((item.doc_id,tf_idf))
+        for term in term_idf.keys():
+            for occurrence in term_idf[term]:
+                if occurrence[0] in sum_doc:
+                    sum_doc[occurrence[0]] =  sum_doc[occurrence[0]] + math.pow(occurrence[1],2)
+                else: 
+                    sum_doc[occurrence[0]] = math.pow(occurrence[1],2)
+        for x in range(1,self.doc_count+1):
+                self.document_norm[x] = round(math.sqrt(sum_doc[x]),2)
+
 class RankingModel():
     @abstractmethod
     def get_ordered_docs(self,query:Mapping[str,TermOccurrence],
@@ -41,14 +60,21 @@ class BooleanRankingModel(RankingModel):
 
     def intersection_all(self,map_lst_occurrences:Mapping[str,List[TermOccurrence]]) -> List[int]:
         set_ids = set()
-        return None
+        set_discover_ids = set()
+        for  term, lst_occurrences in map_lst_occurrences.items():
+             for occurrenc in lst_occurrences:
+                if occurrenc.doc_id not in set_discover_ids:
+                    set_discover_ids.add(occurrenc.doc_id)
+                elif occurrenc.doc_id in set_discover_ids and occurrenc.doc_id not in set_ids:
+                    set_ids.add(occurrenc.doc_id)
+        return list(set_ids)
     def union_all(self,map_lst_occurrences:Mapping[str,List[TermOccurrence]]) -> List[int]:
         set_ids = set()
-        
-        for  term, lst_occurrences in map_lst_occurrences.items():
-            pass
-
-        return None
+        for term, lst_occurrences in map_lst_occurrences.items():
+            for occurrenc in lst_occurrences:
+                if occurrenc.doc_id not in set_ids:
+                    set_ids.add(occurrenc.doc_id)
+        return list(set_ids)
 
     def get_ordered_docs(self,query:Mapping[str,TermOccurrence],
                               map_lst_occurrences:Mapping[str,List[TermOccurrence]]) -> (List[int], Mapping[int,float]):
@@ -66,27 +92,50 @@ class VectorRankingModel(RankingModel):
 
     @staticmethod
     def tf(freq_term:int) -> float:
-        return 0
+        return 1 + math.log(freq_term,2)
 
     @staticmethod
     def idf(doc_count:int, num_docs_with_term:int )->float:
-        return 0
+        return math.log((doc_count/num_docs_with_term),2)
 
     @staticmethod
     def tf_idf(doc_count:int, freq_term:int, num_docs_with_term) -> float:
-        tf = 0
-        idf = 0
-        #print(f"TF:{tf} IDF:{idf} n_i: {num_docs_with_term} N: {doc_count}")
+        tf = VectorRankingModel.tf(freq_term)
+        idf = VectorRankingModel.idf(doc_count,num_docs_with_term)
+        print(f"TF:{tf} IDF:{idf} f: {freq_term} n_i: {num_docs_with_term} N: {doc_count}")
         return tf*idf
 
     def get_ordered_docs(self,query:Mapping[str,TermOccurrence],
                               docs_occur_per_term:Mapping[str,List[TermOccurrence]]) -> (List[int], Mapping[int,float]):
             documents_weight = {}
-
-
-
-
-
+            term_idf = dict()
+            sum_doc  = dict()
+            docs_find = []
+            doc_count=0
+            for item in docs_occur_per_term:
+                for occurrenc in docs_occur_per_term[item]:
+                    if occurrenc.doc_id not in docs_find:
+                        docs_find.append(occurrenc.doc_id)
+                    if occurrenc.doc_id > doc_count:
+                        doc_count = occurrenc.doc_id
+            for term in query.keys():
+                if term in docs_occur_per_term.keys():
+                    for item in docs_occur_per_term[term]:
+                        tf_idf = VectorRankingModel.tf_idf(doc_count,item.term_freq,len(docs_occur_per_term[term]))
+                        if term not in term_idf.keys():
+                            term_idf[term] = list()
+                            term_idf[term].append((item.doc_id,tf_idf))
+                        else:
+                            term_idf[term].append((item.doc_id,tf_idf))
+            for term in term_idf.keys():
+                for occurrence in term_idf[term]:
+                    if occurrence[0] in sum_doc:
+                        sum_doc[occurrence[0]] =  sum_doc[occurrence[0]] + math.pow(occurrence[1],2)
+                    else: 
+                        sum_doc[occurrence[0]] = math.pow(occurrence[1],2)
+            for x in docs_find:
+                if x in sum_doc:
+                    documents_weight[x] = round(math.sqrt(sum_doc[x]),2)
             #retona a lista de doc ids ordenados de acordo com o TF IDF
             return self.rank_document_ids(documents_weight),documents_weight
 
