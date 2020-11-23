@@ -18,26 +18,28 @@ class IndexPreComputedVals():
         """
         self.document_norm = {}
         self.doc_count = self.index.document_count
-        term_idf = dict()
+        self.term_idf = dict()
+        
         sum_doc  = dict()
         for term in list(self.index.dic_index.keys()):
             occurrence_list = self.index.get_occurrence_list(term)
             for item in occurrence_list:
                 tf_idf = VectorRankingModel.tf_idf(self.doc_count,item.term_freq,len(occurrence_list))
-                if term not in term_idf.keys():
-                    term_idf[term] = list()
-                    term_idf[term].append((item.doc_id,tf_idf))
+                print(tf_idf)
+                if term not in self.term_idf.keys():
+                    self.term_idf[term] = list()
+                    self.term_idf[term].append((item.doc_id,tf_idf))
                 else:
-                    term_idf[term].append((item.doc_id,tf_idf))
-        for term in term_idf.keys():
-            for occurrence in term_idf[term]:
+                    self.term_idf[term].append((item.doc_id,tf_idf))
+        for term in self.term_idf.keys():
+            for occurrence in self.term_idf[term]:
                 if occurrence[0] in sum_doc:
                     sum_doc[occurrence[0]] =  sum_doc[occurrence[0]] + math.pow(occurrence[1],2)
                 else: 
                     sum_doc[occurrence[0]] = math.pow(occurrence[1],2)
         for x in range(1,self.doc_count+1):
                 self.document_norm[x] = round(math.sqrt(sum_doc[x]),2)
-
+        
 class RankingModel():
     @abstractmethod
     def get_ordered_docs(self,query:Mapping[str,TermOccurrence],
@@ -102,7 +104,7 @@ class VectorRankingModel(RankingModel):
     def tf_idf(doc_count:int, freq_term:int, num_docs_with_term) -> float:
         tf = VectorRankingModel.tf(freq_term)
         idf = VectorRankingModel.idf(doc_count,num_docs_with_term)
-        print(f"TF:{tf} IDF:{idf} f: {freq_term} n_i: {num_docs_with_term} N: {doc_count}")
+        #print(f"TF:{tf} IDF:{idf} f: {freq_term} n_i: {num_docs_with_term} N: {doc_count}")
         return tf*idf
 
     def get_ordered_docs(self,query:Mapping[str,TermOccurrence],
@@ -111,31 +113,33 @@ class VectorRankingModel(RankingModel):
             term_idf = dict()
             sum_doc  = dict()
             docs_find = []
-            doc_count=0
+            doc_count=0 
+            print(self.idx_pre_comp_vals.term_idf)
             for item in docs_occur_per_term:
                 for occurrenc in docs_occur_per_term[item]:
                     if occurrenc.doc_id not in docs_find:
                         docs_find.append(occurrenc.doc_id)
                     if occurrenc.doc_id > doc_count:
                         doc_count = occurrenc.doc_id
-            for term in query.keys():
-                if term in docs_occur_per_term.keys():
-                    for item in docs_occur_per_term[term]:
-                        tf_idf = VectorRankingModel.tf_idf(doc_count,item.term_freq,len(docs_occur_per_term[term]))
-                        if term not in term_idf.keys():
-                            term_idf[term] = list()
-                            term_idf[term].append((item.doc_id,tf_idf))
-                        else:
-                            term_idf[term].append((item.doc_id,tf_idf))
+            for term in docs_occur_per_term.keys():
+                for item in docs_occur_per_term[term]:
+                    tf_idf = VectorRankingModel.tf_idf(doc_count,query[term].term_freq,len(docs_occur_per_term[term]))
+                    if term not in term_idf.keys():
+                        term_idf[term] = list()
+                        term_idf[term].append((item.doc_id,tf_idf))
+                    else:
+                        term_idf[term].append((item.doc_id,tf_idf))
+           
             for term in term_idf.keys():
                 for occurrence in term_idf[term]:
-                    if occurrence[0] in sum_doc:
-                        sum_doc[occurrence[0]] =  sum_doc[occurrence[0]] + math.pow(occurrence[1],2)
-                    else: 
-                        sum_doc[occurrence[0]] = math.pow(occurrence[1],2)
+                    for ocs in self.idx_pre_comp_vals.term_idf[term]:
+                        if occurrence[0] in sum_doc:
+                            sum_doc[occurrence[0]] =  sum_doc[occurrence[0]] + (occurrence[1] * ocs[1])
+                        else: 
+                            sum_doc[occurrence[0]] = (occurrence[1] * ocs[1] )
             for x in docs_find:
                 if x in sum_doc:
-                    documents_weight[x] = round(math.sqrt(sum_doc[x]),2)
+                    documents_weight[x] = sum_doc[x]/self.idx_pre_comp_vals.document_norm[x]
             #retona a lista de doc ids ordenados de acordo com o TF IDF
             return self.rank_document_ids(documents_weight),documents_weight
 
