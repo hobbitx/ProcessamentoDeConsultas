@@ -17,10 +17,9 @@ class IndexPreComputedVals():
             document_norm: A norma por documento (cada termo é presentado pelo seu peso (tfxidf))
         """
         self.document_norm = {}
-        term_idf = {}
         self.doc_count = self.index.document_count
-        self.idf_calculate = {}
-        sum_doc  = dict()
+        sum_doc  = dict() 
+        term_idf = dict()
         for term in list(self.index.dic_index.keys()):
             occurrence_list = self.index.get_occurrence_list(term)
             for item in occurrence_list:
@@ -30,8 +29,6 @@ class IndexPreComputedVals():
                     term_idf[term].append((item.doc_id,tf_idf))
                 else:
                     term_idf[term].append((item.doc_id,tf_idf))
-
-        self.idf_calculate = term_idf
         for term in term_idf.keys():
             for occurrence in term_idf[term]:
                 if occurrence[0] in sum_doc:
