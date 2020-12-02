@@ -4,6 +4,7 @@ from util.time import CheckTime
 from query.ranking_models import RankingModel,VectorRankingModel, IndexPreComputedVals
 from index.structure import Index, TermOccurrence
 from index.indexer import Cleaner
+import os
 
 class QueryRunner:
 	def __init__(self,ranking_model:RankingModel,index:Index, cleaner:Cleaner):
@@ -19,9 +20,12 @@ class QueryRunner:
 
 		"""
 		dic_relevance_docs = {}
-		for arquiv in ["belo_horizonte","irlanda","sao_paulo"]:
-			with open(f"relevant_docs/{arquiv}.dat") as arq:
-				dic_relevance_docs[arquiv] = set(arq.readline().split(","))
+		for str_file in os.listdir("relevant_docs"):
+			filename = f"relevant_docs/{str_file}"
+			with open(filename) as arq:
+				arquiv = str_file.split(".")[0]
+				dic_relevance_docs[arquiv] = set(map(lambda s: str(s).replace("\n",""),arq.readline().split(",")))
+				
 		return dic_relevance_docs
 
 	def count_topn_relevant(self,n,respostas:List[int],doc_relevantes:Set[int]) -> int:
@@ -32,8 +36,9 @@ class QueryRunner:
 		"""
 		#print(f"Respostas: {respostas} doc_relevantes: {doc_relevantes}")
 		relevance_count = 0
-        
-
+		for position in list(respostas[0:n]):
+			if position in doc_relevantes:
+				relevance_count = relevance_count + 1
 		return relevance_count
 
 	def get_query_term_occurence(self, query:str) -> Mapping[str,TermOccurrence]:
@@ -76,7 +81,7 @@ class QueryRunner:
 		return None
 
 	@staticmethod
-	def runQuery(query:str, indice:Index, indice_pre_computado: , map_relevantes):
+	def runQuery(query:str, indice:Index, indice_pre_computado: IndexPreComputedVals, map_relevantes):
 		time_checker = CheckTime()
 
 		#PEça para usuario selecionar entre Booleano ou modelo vetorial para intanciar o QueryRunner
