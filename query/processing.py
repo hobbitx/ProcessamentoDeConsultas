@@ -51,9 +51,18 @@ class QueryRunner:
 		"""
 		#print(self.index)
 		map_term_occur = {}
-
-
-
+		cleaner_query = self.cleaner.preprocess_word(query)
+		
+		
+		for term in cleaner_query.split(" "):
+			term_id = self.index.get_term_id(term)
+			if term not in map_term_occur.keys():
+				term_occur = TermOccurrence(None,term_id,1)
+			else:
+				term_occur = map_term_occur[term]
+				term_occur = TermOccurrence(None,term_id,(term_occur.term_freq +1))
+			if term_id != None:
+				map_term_occur[term] = term_occur
 		return map_term_occur
 
 	def get_occurrence_list_per_term(self, terms:List) -> Mapping[str, List[TermOccurrence]]:
@@ -61,8 +70,13 @@ class QueryRunner:
 			Retorna dicionario a lista de ocorrencia no indice de cada termo passado como parametro.
 			Caso o termo nao exista, este termo possuirá uma lista vazia
 		"""
-
-
+		dic_terms = {}
+		for term in terms:
+			term_id = self.index.get_term_id(term)
+			if term_id == None:
+				dic_terms[term] = []
+			else:
+				dic_terms[term] = self.index.get_occurrence_list(term)		
 
 		return dic_terms
 	def get_docs_term(self, query:str) -> List[int]:

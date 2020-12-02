@@ -152,6 +152,8 @@ class FileIndex(Index):
         self.str_idx_file_name = None
 
     def get_term_id(self, term:str):
+        if term not in self.dic_index.keys():
+            return None
         return self.dic_index[term].term_id
 
     def create_index_entry(self, term_id:int) -> TermFilePosition:
