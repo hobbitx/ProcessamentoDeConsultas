@@ -84,15 +84,18 @@ class QueryRunner:
 			A partir do indice, retorna a lista de ids de documentos desta consulta
 			usando o modelo especificado pelo atributo ranking_model
 		"""
+		cleaner_query = self.cleaner.preprocess_word(query)
+		
 		#Obtenha, para cada termo da consulta, sua ocorrencia por meio do método get_query_term_occurence
-		dic_query_occur = None
-
+		dic_query_occur = self.get_query_term_occurence(cleaner_query)
+	
 		#obtenha a lista de ocorrencia dos termos da consulta
-		dic_occur_per_term_query = None
-
-
+		lista = cleaner_query.split(" ")
+		dic_occur_per_term_query = self.get_occurrence_list_per_term(lista)
+		
 		#utilize o ranking_model para retornar o documentos ordenados considrando dic_query_occur e dic_occur_per_term_query
-		return None
+		return self.ranking_model.get_ordered_docs(dic_query_occur,dic_occur_per_term_query)
+		
 
 	@staticmethod
 	def runQuery(query:str, indice:Index, indice_pre_computado: IndexPreComputedVals, map_relevantes):
