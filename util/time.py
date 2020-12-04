@@ -1,3 +1,6 @@
+
+from datetime import datetime
+
 class CheckTime(object):
     def __init__(self):
         self.time = datetime.now()

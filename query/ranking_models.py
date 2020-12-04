@@ -35,7 +35,7 @@ class IndexPreComputedVals():
                     sum_doc[occurrence[0]] =  sum_doc[occurrence[0]] + math.pow(occurrence[1],2)
                 else: 
                     sum_doc[occurrence[0]] = math.pow(occurrence[1],2)
-        for x in range(1,self.doc_count+1):
+        for x in self.index.set_documents:
             self.document_norm[x] = round(math.sqrt(sum_doc[x]),2)
             
 class RankingModel():
