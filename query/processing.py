@@ -1,8 +1,8 @@
 from typing import List, Set,Mapping
 from nltk.tokenize import word_tokenize
 from util.time import CheckTime
-from query.ranking_models import RankingModel,VectorRankingModel, IndexPreComputedVals
-from index.structure import Index, TermOccurrence
+from query.ranking_models import *
+from index.structure import Index, TermOccurrence, FileIndex
 from index.indexer import Cleaner
 import os
 
@@ -104,24 +104,42 @@ class QueryRunner:
 		#PEça para usuario selecionar entre Booleano ou modelo vetorial para intanciar o QueryRunner
 		#apropriadamente. NO caso do booleano, vc deve pedir ao usuario se será um "and" ou "or" entre os termos.
 		#abaixo, existem exemplos fixos.
-		qr = QueryRunner(indice, VectorRankingModel(indice_pre_computado))
+        
+        qr = None
+        mod = RankingModel()
+        modelo = input("Selecione um dos modelos:\n1)Modelo Booleano\n2)Modelo Vetorial")
+        if modelo==1:
+            operador = input("Qual dos termos deseja utilizar?1)AND\n2)OR")
+            if operador==1:
+                mod = BooleanRankingModel(OPERATOR.AND)
+            elif operator==2:
+                mod = BooleanRankingModel(OPERATOR.OR)
+            else:
+                raise Exception("Opção inválida. A execução foi interrompida.")
+        elif modelo==2:
+            mod = VectorRankingModel(indice_pre_computado)
+        else:
+            raise Exception("Opção inválida. A execução foi interrompida.")
+            
+        qr = QueryRunner(indice, mod)
 		time_checker.print_delta("Query Creation")
 
 
 		#Utilize o método get_docs_term para obter a lista de documentos que responde esta consulta
-		resposta = None
-		time_checker.print_delta("anwered with {len(respostas)} docs")
+		respostas = qr.get_docs_term(query)
+		time_checker.print_delta("anwered with {len(resposta)} docs")
 
 		#nesse if, vc irá verificar se o termo possui documentos relevantes associados a ele
 		#se possuir, vc deverá calcular a Precisao e revocação nos top 5, 10, 20, 50.
 		#O for que fiz abaixo é só uma sugestao e o metododo countTopNRelevants podera auxiliar no calculo da revocacao e precisao
-		if(True):
+		if(respostas in map_relevantes):
 			arr_top = [5,10,20,50]
-			revocacao = 0
+			revocacao = 0 
 			precisao = 0
 			for n in arr_top:
-				revocacao = 0#substitua aqui pelo calculo da revocacao topN
-				precisao = 0#substitua aqui pelo calculo da revocacao topN
+				revocacao = self.count_topn_relevant(n,respostas,map_relevantes.get(respostas)) / len(map_relevantes) #substitua aqui pelo calculo da revocacao topN
+				precisao = self.count_topn_relevant(n,respostas,map_relevantes.get(respostas)) / len(respostas) #substitua aqui pelo calculo da revocacao topN
+                filter(map_relevantes, resposta)
 				print("Precisao @{n}: {precisao}")
 				print("Recall @{n}: {revocacao}")
 
@@ -130,24 +148,24 @@ class QueryRunner:
 	@staticmethod
 	def main():
 		#leia o indice (base da dados fornecida)
-		index = None
+		index = FileIndex()
 
 		#Checagem se existe um documento (apenas para teste, deveria existir)
 		print(f"Existe o doc? index.hasDocId(105047)")
 
 		#Instancie o IndicePreCompModelo para pr ecomputar os valores necessarios para a query
-		print("Precomputando valores atraves do indice...");
+        idxPreCom = IndexPreComputedVals(index)
+		print("Precomputando valores atraves do indice...")
 		check_time = CheckTime()
         
-
-
 
 		check_time.print_delta("Precomputou valores")
 
 		#encontra os docs relevantes
-		map_relevance = None
+		map_relevance = self.get_relevance_per_query()
 		
 		print("Fazendo query...")
 		#aquui, peça para o usuário uma query (voce pode deixar isso num while ou fazer um interface grafica se estiver bastante animado ;)
-		query = "São Paulo";
-		runQuery(query,idx, idxPreCom,mapRelevances);
+        while(True):
+            query = str(input("Insira um termo que deseja pesquisar: "))
+            self.runQuery(query, index, idxPreCom, map_relevance)
