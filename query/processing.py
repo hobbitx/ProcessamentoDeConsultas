@@ -153,7 +153,7 @@ class QueryRunner:
 		#leia o indice (base da dados fornecida)
 		index = FileIndex()
 		
-		index.index("sao paulo",37632,1)
+		index.index("irlanda",37632,1)
 		index.index("irlanda",39300,3)
 		index.index("espero",39300,1)
 		index.index("que",11953,1)
@@ -161,7 +161,18 @@ class QueryRunner:
 		index.index("estejam",11953,1)
 		index.index("se",11953,1)
 		index.index("irlanda",37632,4)
+		
+		index.index("que",44259,1)
+		index.index("irlanda",44259,1)
+		index.index("estejam",44259,1)
+		index.index("se",44259,1)
+		index.index("irlanda",111966,4)
 
+		index.index("que",51714,1)
+		index.index("irlanda",51714,1)
+		index.index("estejam",51714,1)
+		index.index("se",51714,1)
+		
 		index.finish_indexing()
 		#Checagem se existe um documento (apenas para teste, deveria existir)
 		print(f"Existe o doc? index.hasDocId(105047)")
