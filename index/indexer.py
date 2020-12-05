@@ -12,7 +12,9 @@ class Cleaner:
                         perform_stop_words_removal:bool,perform_accents_removal:bool,
                         perform_stemming:bool):
         #self.set_stop_words = self.read_stop_words(stop_words_file)
-    
+  
+        nltk.download('stopwords')
+        nltk.download('punkt')
         self.set_stop_words = set(stopwords.words('portuguese'))
         self.stemmer = SnowballStemmer(language)
         in_table =  "áéíóúâêôçãẽõü!?.:;,"

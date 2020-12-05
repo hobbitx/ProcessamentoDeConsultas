@@ -147,6 +147,7 @@ class QueryRunner:
 		else:
 			print("termo nao ta na pesquisa")
 		#imprima aas top 10 respostas
+		print("")
 
 	@staticmethod
 	def main():
@@ -158,7 +159,7 @@ class QueryRunner:
 		index.index("espero",39300,1)
 		index.index("que",11953,1)
 		index.index("irlanda",11953,1)
-		index.index("estejam",11953,1)
+		index.index("você",11953,1)
 		index.index("se",11953,1)
 		index.index("irlanda",37632,4)
 		
